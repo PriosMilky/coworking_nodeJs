@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Upload Pembayaran - CO&CO HUB</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { background-color: #f4f7f6; }
+        .upload-card { margin-top: 40px; margin-bottom: 40px; border-radius: 15px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+        .kode-booking-box { background-color: #e9ecef; border: 2px dashed #0d6efd; border-radius: 10px; padding: 15px; text-align: center; margin-bottom: 20px; }
+        .kode-booking-text { font-size: 24px; font-weight: bold; color: #0d6efd; letter-spacing: 2px; }
+    </style>
+</head>
+<body>
+
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container">
+            <a class="navbar-brand fw-bold" href="index.html">CO&CO HUB</a>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-md-8 col-lg-6">
+                <div class="card upload-card">
+                    <div class="card-header bg-white text-center pt-4 pb-3 border-0">
+                        <h4 class="fw-bold text-primary">Pembayaran & Konfirmasi</h4>
+                        <p class="text-muted">Selesaikan pembayaran Anda</p>
+                    </div>
+                    <div class="card-body p-4">
+                        
+                        <!-- Kotak Kode Booking -->
+                        <div class="kode-booking-box">
+                            <p class="mb-1 text-muted">Simpan Kode Booking Anda:</p>
+                            <div class="kode-booking-text" id="tampilKode">COCO-XXXX</div>
+                        </div>
+
+                        <!-- Ringkasan Pesanan (Diisi oleh JavaScript) -->
+                        <h6 class="text-secondary mb-3">Ringkasan Pesanan</h6>
+                        <ul class="list-group mb-4">
+                            <li class="list-group-item d-flex justify-content-between">
+                                <span>Nama</span> <strong id="tampilNama">-</strong>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between">
+                                <span>Ruangan</span> <strong id="tampilRuangan">-</strong>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between">
+                                <span>Jadwal</span> <strong id="tampilJadwal">-</strong>
+                            </li>
+                        </ul>
+
+                        <!-- Informasi Rekening -->
+                        <div class="alert alert-info">
+                            <strong>Silakan Transfer ke:</strong><br>
+                            Bank BCA: <strong>123-456-7890</strong><br>
+                            a/n PT Global Sinergi Kreasindo
+                        </div>
+
+                        <!-- Form Upload -->
+                        <form id="formUpload">
+                            <div class="mb-3">
+                                <label for="buktiTransfer" class="form-label fw-bold">Upload Bukti Transfer (Gambar)</label>
+                                <input class="form-control" type="file" id="buktiTransfer" accept="image/*" required>
+                                <div class="form-text">Pastikan nominal dan tanggal transfer terlihat jelas.</div>
+                            </div>
+                            <div class="d-grid gap-2 mt-4">
+                                <button type="submit" class="btn btn-success btn-lg">Kirim Konfirmasi Pembayaran</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 1. AMBIL DATA DARI HALAMAN BOOKING
+        const dataBooking = JSON.parse(localStorage.getItem('dataBookingSementara'));
+
+        // Jika tidak ada data (pelanggan langsung buka halaman ini tanpa pesan), kembalikan ke form
+        if (!dataBooking) {
+            alert('Anda belum melakukan pemesanan. Silakan pilih ruangan terlebih dahulu.');
+            window.location.href = 'index.html';
+        } else {
+            // Tampilkan data ke layar
+            document.getElementById('tampilKode').innerText = dataBooking.kodeBooking;
+            document.getElementById('tampilNama').innerText = dataBooking.nama;
+            document.getElementById('tampilRuangan').innerText = dataBooking.ruangan;
+            document.getElementById('tampilJadwal').innerText = dataBooking.tanggal + ' | ' + dataBooking.jam;
+        }
+
+        // 2. SIMULASI UPLOAD & PINDAH KE CEK STATUS
+        document.getElementById('formUpload').addEventListener('submit', function(e) {
+            e.preventDefault(); // Tahan form agar tidak reload
+            
+            // Di sistem nyata, di sini kita akan mengirim file ke Node.js
+            // Untuk sekarang, kita anggap berhasil.
+            alert('Bukti transfer berhasil diunggah! Sistem akan memverifikasi pesanan Anda.');
+            
+            // Arahkan ke halaman cek status
+            window.location.href = 'cek-status.html';
+        });
+    </script>
+</body>
+</html>

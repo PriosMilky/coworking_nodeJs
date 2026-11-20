@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cek Status Pesanan - CO&CO HUB</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { background-color: #f4f7f6; }
+        .status-card { margin-top: 50px; border-radius: 15px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+    </style>
+</head>
+<body>
+
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container">
+            <a class="navbar-brand fw-bold" href="index.html">CO&CO HUB</a>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-md-8 col-lg-6">
+                
+                <!-- Card Pencarian Kode -->
+                <div class="card status-card">
+                    <div class="card-body p-5 text-center">
+                        <h4 class="fw-bold mb-4">Cek Status Pesanan</h4>
+                        <p class="text-muted mb-4">Masukkan Kode Booking Anda (Contoh: COCO-1234)</p>
+                        
+                        <div class="input-group mb-3 input-group-lg">
+                            <input type="text" class="form-control text-center fw-bold" id="inputKode" placeholder="COCO-XXXX" required>
+                            <button class="btn btn-primary" type="button" id="btnCek">Cek Status</button>
+                        </div>
+                        <div id="pesanError" class="text-danger mt-2 d-none">Kode booking tidak ditemukan.</div>
+                    </div>
+                </div>
+
+                <!-- Card Hasil Pencarian (Awalnya disembunyikan) -->
+                <div class="card status-card d-none" id="hasilPencarian">
+                    <div class="card-body p-4">
+                        <h5 class="fw-bold border-bottom pb-3 mb-3">Detail Pesanan</h5>
+                        
+                        <div class="row mb-2">
+                            <div class="col-4 text-muted">Nama</div>
+                            <div class="col-8 fw-bold" id="hasilNama">-</div>
+                        </div>
+                        <div class="row mb-2">
+                            <div class="col-4 text-muted">Ruangan</div>
+                            <div class="col-8 fw-bold" id="hasilRuangan">-</div>
+                        </div>
+                        <div class="row mb-2">
+                            <div class="col-4 text-muted">Jadwal</div>
+                            <div class="col-8 fw-bold" id="hasilJadwal">-</div>
+                        </div>
+                        <div class="row mb-4">
+                            <div class="col-4 text-muted">Status</div>
+                            <div class="col-8">
+                                <!-- Badge Status (Warna kuning untuk pending) -->
+                                <span class="badge bg-warning text-dark fs-6" id="hasilStatus">Menunggu Verifikasi</span>
+                            </div>
+                        </div>
+
+                        <div class="alert alert-info text-center mb-0">
+                            Silakan tunjukkan halaman ini ke resepsionis jika status sudah <strong>Disetujui</strong>.
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('btnCek').addEventListener('click', function() {
+            const inputKode = document.getElementById('inputKode').value.toUpperCase();
+            const pesanError = document.getElementById('pesanError');
+            const hasilPencarian = document.getElementById('hasilPencarian');
+
+            // Ambil data dari localStorage (simulasi database)
+            const dataBooking = JSON.parse(localStorage.getItem('dataBookingSementara'));
+
+            // Logika Pengecekan
+            if (dataBooking && inputKode === dataBooking.kodeBooking) {
+                // Jika kode cocok, sembunyikan error dan tampilkan hasil
+                pesanError.classList.add('d-none');
+                hasilPencarian.classList.remove('d-none');
+
+                // Isi data ke dalam card hasil
+                document.getElementById('hasilNama').innerText = dataBooking.nama;
+                document.getElementById('hasilRuangan').innerText = dataBooking.ruangan;
+                document.getElementById('hasilJadwal').innerText = dataBooking.tanggal + ' | ' + dataBooking.jam;
+                
+                // Catatan: Untuk MVP, kita hardcode statusnya jadi "Menunggu Verifikasi"
+                // Nanti jika backend sudah jadi, status ini diambil dari database (Pending/Approved/Rejected).
+                
+            } else {
+                // Jika kode salah atau data tidak ada
+                pesanError.classList.remove('d-none');
+                hasilPencarian.classList.add('d-none');
+            }
+        });
+    </script>
+</body>
+</html>
