@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - CO&CO HUB</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { background-color: #f4f7f6; }
+        .sidebar { min-height: 100vh; background-color: #212529; color: white; }
+        .sidebar a { color: #adb5bd; text-decoration: none; padding: 10px 15px; display: block; }
+        .sidebar a:hover, .sidebar a.active { background-color: #0d6efd; color: white; }
+        .stat-card { border-left: 5px solid #0d6efd; }
+    </style>
+</head>
+<body>
+
+    <div class="d-flex">
+        <!-- Sidebar (Menu Kiri) -->
+        <div class="sidebar p-3" style="width: 250px;">
+            <h4 class="text-white text-center mb-4">CO&CO Admin</h4>
+            <a href="#" class="active mb-2">📊 Dashboard</a>
+            <a href="#" class="mb-2">📅 Data Pemesanan</a>
+            <a href="#" class="mb-2">🏢 Kelola Ruangan</a>
+            <hr>
+            <a href="index.html" class="text-danger">🚪 Logout</a>
+        </div>
+
+        <!-- Konten Utama (Kanan) -->
+        <div class="flex-grow-1 p-4">
+            <h2 class="fw-bold mb-4">Dashboard Admin</h2>
+            
+            <!-- Kotak Statistik (Mirip MikroTik) -->
+            <div class="row mb-4">
+                <div class="col-md-4">
+                    <div class="card stat-card shadow-sm p-3">
+                        <h6 class="text-muted">Total Pemesanan</h6>
+                        <h3 class="fw-bold" id="totalPemesanan">0</h3>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card stat-card shadow-sm p-3" style="border-left-color: #ffc107;">
+                        <h6 class="text-muted">Menunggu Verifikasi</h6>
+                        <h3 class="fw-bold text-warning" id="totalPending">0</h3>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card stat-card shadow-sm p-3" style="border-left-color: #198754;">
+                        <h6 class="text-muted">Disetujui</h6>
+                        <h3 class="fw-bold text-success" id="totalDisetujui">0</h3>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tabel Data Pemesanan -->
+            <div class="card shadow-sm">
+                <div class="card-header bg-white pb-0 pt-3">
+                    <h5 class="fw-bold">Daftar Pemesanan Masuk</h5>
+                </div>
+                <div class="card-body">
+                    <table class="table table-hover align-middle">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Kode Booking</th>
+                                <th>Nama Penyewa</th>
+                                <th>Ruangan</th>
+                                <th>Jadwal</th>
+                                <th>Status</th>
+                                <th>Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tabelPesanan">
+                            <!-- Data akan diisi oleh JavaScript -->
+                        </tbody>
+                    </table>
+                    <div id="pesanKosong" class="text-center text-muted py-4 d-none">
+                        Belum ada data pemesanan.
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        // SIMULASI: Kita ambil data dari localStorage (karena belum pakai Database Node.js)
+        const dataBooking = JSON.parse(localStorage.getItem('dataBookingSementara'));
+
+        // Variabel untuk menghitung statistik
+        let total = 0;
+        let pending = 0;
+        let disetujui = 0;
+
+        const tabelBody = document.getElementById('tabelPesanan');
+        const pesanKosong = document.getElementById('pesanKosong');
+
+        if (dataBooking) {
+            total = 1;
+            pending = 1; // Anggap semua yang masuk baru "Pending"
+
+            // Buat baris tabel baru
+            const row = `
+                <tr>
+                    <td class="fw-bold">${dataBooking.kodeBooking}</td>
+                    <td>${dataBooking.nama}</td>
+                    <td>${dataBooking.ruangan}</td>
+                    <td>${dataBooking.tanggal} | ${dataBooking.jam}</td>
+                    <td><span class="badge bg-warning text-dark">Menunggu Verifikasi</span></td>
+                    <td>
+                        <button class="btn btn-sm btn-success" onclick="alert('Fitur verifikasi akan dihubungkan ke Node.js nanti.')">Verifikasi</button>
+                    </td>
+                </tr>
+            `;
+            tabelBody.innerHTML = row;
+            pesanKosong.classList.add('d-none');
+        } else {
+            // Jika tidak ada data
+            pesanKosong.classList.remove('d-none');
+        }
+
+        // Update angka di kotak statistik
+        document.getElementById('totalPemesanan').innerText = total;
+        document.getElementById('totalPending').innerText = pending;
+        document.getElementById('totalDisetujui').innerText = disetujui;
+    </script>
+</body>
+</html>
