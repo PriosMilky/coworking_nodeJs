@@ -12,7 +12,6 @@
 </head>
 <body>
 
-    <!-- Navbar -->
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
         <div class="container">
             <a class="navbar-brand fw-bold" href="index.html">CO&CO HUB</a>
@@ -24,45 +23,42 @@
             <div class="col-md-8 col-lg-6">
                 <div class="card booking-card">
                     <div class="card-header bg-white text-center pt-4 pb-3 border-0">
-                        <h4 class="fw-bold text-primary">Form Pemesanan Ruangan</h4>
-                        <p class="text-muted">Lengkapi data diri dan jadwal Anda</p>
+                        <h4 class="fw-bold text-primary">Form Pemesanan</h4>
+                        <p class="text-muted">Isi data untuk memesan ruangan</p>
                     </div>
                     <div class="card-body p-4">
-                        <!-- Form dengan ID untuk ditangkap JavaScript -->
-                        <form id="formBooking">
-                            
-                            <h6 class="text-secondary mb-3">1. Data Diri</h6>
+                        <form id="bookingForm">
                             <div class="mb-3">
-                                <label for="nama" class="form-label">Nama Lengkap / Instansi</label>
-                                <input type="text" class="form-control" id="nama" placeholder="Masukkan nama" required>
+                                <label class="form-label fw-bold">Nama Lengkap</label>
+                                <input type="text" class="form-control" id="customer_name" required>
                             </div>
-                            <div class="mb-4">
-                                <label for="whatsapp" class="form-label">Nomor WhatsApp</label>
-                                <input type="tel" class="form-control" id="whatsapp" placeholder="Contoh: 08123456789" required>
-                            </div>
-
-                            <h6 class="text-secondary mb-3">2. Detail Ruangan & Jadwal</h6>
                             <div class="mb-3">
-                                <label for="ruangan" class="form-label">Ruangan yang Dipilih</label>
-                                <!-- Dropdown ini akan otomatis terpilih lewat JS -->
-                                <select class="form-select" id="ruangan" required>
-                                    <option value="" selected disabled>-- Pilih Ruangan --</option>
-                                    <option value="Meeting Room Small">Meeting Room Small (Rp 150.000/jam)</option>
-                                    <option value="Meeting Room Medium">Meeting Room Medium (Rp 200.000/jam)</option>
-                                    <option value="Event Hall">Event Hall (Rp 4.500.000/hari)</option>
-                                </select>
+                                <label class="form-label fw-bold">No. WhatsApp</label>
+                                <input type="tel" class="form-control" id="customer_phone" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label fw-bold">Pilih Ruangan</label>
+                                <select class="form-select" id="room_id" required></select>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label fw-bold">Tanggal</label>
+                                <input type="date" class="form-control" id="booking_date" required>
                             </div>
                             <div class="row mb-3">
-                                <div class="col-md-6">
-                                    <label for="tanggal" class="form-label">Tanggal</label>
-                                    <input type="date" class="form-control" id="tanggal" required>
+                                <div class="col">
+                                    <label class="form-label fw-bold">Jam Mulai</label>
+                                    <input type="time" class="form-control" id="start_time" required>
                                 </div>
-                                <div class="col-md-6">
-                                    <label for="jam" class="form-label">Jam Mulai</label>
-                                    <input type="time" class="form-control" id="jam" required>
+                                <div class="col">
+                                    <label class="form-label fw-bold">Jam Selesai</label>
+                                    <input type="time" class="form-control" id="end_time" required>
                                 </div>
                             </div>
-
+                            <div class="alert alert-secondary d-flex justify-content-between">
+                                <span class="fw-bold">Total Biaya</span>
+                                <strong id="totalDisplay" class="text-primary">Rp 0</strong>
+                            </div>
+                            <input type="hidden" id="total_price" value="0">
                             <div class="d-grid gap-2 mt-4">
                                 <button type="submit" class="btn btn-primary btn-lg">Lanjut ke Pembayaran</button>
                             </div>
@@ -73,38 +69,63 @@
         </div>
     </div>
 
-    <script>
-        // 1. FITUR OTOMATIS PILIH RUANGAN (Membaca URL)
-        // Contoh URL: booking.html?id=meeting-small
-        const urlParams = new URLSearchParams(window.location.search);
-        const idRuangan = urlParams.get('id');
-        const dropdownRuangan = document.getElementById('ruangan');
+    <script type="module">
+        import { getRooms, submitBooking } from './main.js';
 
-        if (idRuangan === 'meeting-small') dropdownRuangan.value = 'Meeting Room Small';
-        if (idRuangan === 'meeting-medium') dropdownRuangan.value = 'Meeting Room Medium';
-        if (idRuangan === 'event-hall') dropdownRuangan.value = 'Event Hall';
+        let rooms = [];
 
-        // 2. FITUR SIMPAN DATA SEMENTARA & PINDAH HALAMAN
-        document.getElementById('formBooking').addEventListener('submit', function(e) {
-            e.preventDefault(); // Mencegah halaman reload
+        // 1. Load ruangan dari database
+        async function loadRooms() {
+            rooms = await getRooms();
+            const select = document.getElementById('room_id');
+            select.innerHTML = rooms.map(r =>
+                `<option value="${r.id}" data-price="${r.price_per_hour}">${r.name} - Rp ${Number(r.price_per_hour).toLocaleString('id')}/jam</option>`
+            ).join('');
+            // Prefill dari query param ?room=1 (dari tombol "Pesan Sekarang" di index.html)
+            const pre = new URLSearchParams(window.location.search).get('room');
+            if (pre) select.value = pre;
+            hitungTotal();
+        }
 
-            // Ambil data dari form
-            const dataBooking = {
-                nama: document.getElementById('nama').value,
-                whatsapp: document.getElementById('whatsapp').value,
-                ruangan: document.getElementById('ruangan').value,
-                tanggal: document.getElementById('tanggal').value,
-                jam: document.getElementById('jam').value,
-                // Generate Kode Booking acak (Contoh: COCO-4821)
-                kodeBooking: 'COCO-' + Math.floor(1000 + Math.random() * 9000)
-            };
+        // 2. Hitung total = durasi jam x harga
+        function hitungTotal() {
+            const sel = document.getElementById('room_id');
+            const opt = sel.selectedOptions[0];
+            const price = opt ? Number(opt.dataset.price) : 0;
+            const start = document.getElementById('start_time').value;
+            const end = document.getElementById('end_time').value;
+            let total = 0;
+            if (start && end) {
+                const jam = (new Date('2000-01-01T' + end) - new Date('2000-01-01T' + start)) / 3600000;
+                if (jam > 0) total = jam * price;
+            }
+            document.getElementById('totalDisplay').innerText = 'Rp ' + Math.round(total).toLocaleString('id');
+            document.getElementById('total_price').value = total;
+        }
 
-            // Simpan ke localStorage (karena backend belum jadi)
-            localStorage.setItem('dataBookingSementara', JSON.stringify(dataBooking));
+        document.getElementById('room_id').addEventListener('change', hitungTotal);
+        document.getElementById('start_time').addEventListener('change', hitungTotal);
+        document.getElementById('end_time').addEventListener('change', hitungTotal);
 
-            // Pindah ke halaman upload bukti
-            window.location.href = 'upload.html';
+        // 3. Submit ke backend
+        document.getElementById('bookingForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const result = await submitBooking({
+                customer_name: document.getElementById('customer_name').value,
+                customer_phone: document.getElementById('customer_phone').value,
+                room_id: parseInt(document.getElementById('room_id').value),
+                booking_date: document.getElementById('booking_date').value,
+                start_time: document.getElementById('start_time').value,
+                end_time: document.getElementById('end_time').value,
+                total_price: parseFloat(document.getElementById('total_price').value)
+            });
+            if (result) {
+                alert(`Booking berhasil! Kode Anda: ${result.booking_code}\nSimpan kode ini untuk cek status.`);
+                window.location.href = 'upload.html';
+            }
         });
+
+        loadRooms();
     </script>
 </body>
 </html>

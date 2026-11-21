@@ -54,10 +54,17 @@
                             <div class="col-4 text-muted">Jadwal</div>
                             <div class="col-8 fw-bold" id="hasilJadwal">-</div>
                         </div>
+
+                        <!-- ===== TAMBAHAN: Baris Total Biaya ===== -->
+                        <div class="row mb-2">
+                            <div class="col-4 text-muted">Total Biaya</div>
+                            <div class="col-8 fw-bold text-success" id="hasilBiaya">-</div>
+                        </div>
+                        <!-- ===================================== -->
+
                         <div class="row mb-4">
                             <div class="col-4 text-muted">Status</div>
                             <div class="col-8">
-                                <!-- Badge Status (Warna kuning untuk pending) -->
                                 <span class="badge bg-warning text-dark fs-6" id="hasilStatus">Menunggu Verifikasi</span>
                             </div>
                         </div>
@@ -72,31 +79,55 @@
         </div>
     </div>
 
-    <script>
-        document.getElementById('btnCek').addEventListener('click', function() {
-            const inputKode = document.getElementById('inputKode').value.toUpperCase();
+    <script type="module">
+        import { getBookingByCode } from './main.js';
+
+        // Helper format Rupiah
+        const formatRupiah = (angka) =>
+            'Rp ' + Number(angka).toLocaleString('id-ID');
+
+        // Helper format tanggal MySQL -> Indonesia
+        const formatTanggal = (tgl) => {
+            const d = new Date(tgl);
+            return isNaN(d) ? tgl : d.toLocaleDateString('id-ID', {
+                weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'
+            });
+        };
+
+        document.getElementById('btnCek').addEventListener('click', async function() {
+            const inputKode = document.getElementById('inputKode').value.trim().toUpperCase();
             const pesanError = document.getElementById('pesanError');
             const hasilPencarian = document.getElementById('hasilPencarian');
 
-            // Ambil data dari localStorage (simulasi database)
-            const dataBooking = JSON.parse(localStorage.getItem('dataBookingSementara'));
+            if (!inputKode) return;
 
-            // Logika Pengecekan
-            if (dataBooking && inputKode === dataBooking.kodeBooking) {
-                // Jika kode cocok, sembunyikan error dan tampilkan hasil
+            const data = await getBookingByCode(inputKode);
+
+            if (data) {
                 pesanError.classList.add('d-none');
                 hasilPencarian.classList.remove('d-none');
 
-                // Isi data ke dalam card hasil
-                document.getElementById('hasilNama').innerText = dataBooking.nama;
-                document.getElementById('hasilRuangan').innerText = dataBooking.ruangan;
-                document.getElementById('hasilJadwal').innerText = dataBooking.tanggal + ' | ' + dataBooking.jam;
-                
-                // Catatan: Untuk MVP, kita hardcode statusnya jadi "Menunggu Verifikasi"
-                // Nanti jika backend sudah jadi, status ini diambil dari database (Pending/Approved/Rejected).
-                
+                document.getElementById('hasilNama').innerText = data.customer_name;
+                document.getElementById('hasilRuangan').innerText = data.room_name;
+
+                // Jadwal dirapikan (tanggal Indonesia + jam tanpa detik)
+                document.getElementById('hasilJadwal').innerText =
+                    formatTanggal(data.booking_date) + ' | ' +
+                    data.start_time.slice(0,5) + ' - ' + data.end_time.slice(0,5);
+
+                // ===== TAMBAHAN: isi biaya =====
+                document.getElementById('hasilBiaya').innerText = formatRupiah(data.total_price);
+                // ===============================
+
+                // Badge status dinamis dari database
+                const badge = document.getElementById('hasilStatus');
+                badge.innerText = data.status.replace(/_/g, ' ');
+                badge.className = 'badge fs-6 ' + (
+                    data.status === 'DISSETUJUI' ? 'bg-success' :
+                    data.status === 'DITOLAK'    ? 'bg-danger'  :
+                                                   'bg-warning text-dark'
+                );
             } else {
-                // Jika kode salah atau data tidak ada
                 pesanError.classList.remove('d-none');
                 hasilPencarian.classList.add('d-none');
             }

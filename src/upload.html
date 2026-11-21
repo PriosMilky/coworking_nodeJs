@@ -1,17 +1,41 @@
 <!DOCTYPE html>
 <html lang="id">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Upload Pembayaran - CO&CO HUB</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
-        body { background-color: #f4f7f6; }
-        .upload-card { margin-top: 40px; margin-bottom: 40px; border-radius: 15px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
-        .kode-booking-box { background-color: #e9ecef; border: 2px dashed #0d6efd; border-radius: 10px; padding: 15px; text-align: center; margin-bottom: 20px; }
-        .kode-booking-text { font-size: 24px; font-weight: bold; color: #0d6efd; letter-spacing: 2px; }
+        body {
+            background-color: #f4f7f6;
+        }
+
+        .upload-card {
+            margin-top: 40px;
+            margin-bottom: 40px;
+            border-radius: 15px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .kode-booking-box {
+            background-color: #e9ecef;
+            border: 2px dashed #0d6efd;
+            border-radius: 10px;
+            padding: 15px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .kode-booking-text {
+            font-size: 24px;
+            font-weight: bold;
+            color: #0d6efd;
+            letter-spacing: 2px;
+        }
     </style>
 </head>
+
 <body>
 
     <!-- Navbar -->
@@ -30,7 +54,7 @@
                         <p class="text-muted">Selesaikan pembayaran Anda</p>
                     </div>
                     <div class="card-body p-4">
-                        
+
                         <!-- Kotak Kode Booking -->
                         <div class="kode-booking-box">
                             <p class="mb-1 text-muted">Simpan Kode Booking Anda:</p>
@@ -49,6 +73,11 @@
                             <li class="list-group-item d-flex justify-content-between">
                                 <span>Jadwal</span> <strong id="tampilJadwal">-</strong>
                             </li>
+                            <!-- ===== BARU: Total Biaya ===== -->
+                            <li class="list-group-item d-flex justify-content-between bg-light">
+                                <span class="fw-bold">Total Biaya</span>
+                                <strong id="tampilBiaya" class="text-success">Rp 0</strong>
+                            </li>
                         </ul>
 
                         <!-- Informasi Rekening -->
@@ -61,12 +90,14 @@
                         <!-- Form Upload -->
                         <form id="formUpload">
                             <div class="mb-3">
-                                <label for="buktiTransfer" class="form-label fw-bold">Upload Bukti Transfer (Gambar)</label>
+                                <label for="buktiTransfer" class="form-label fw-bold">Upload Bukti Transfer
+                                    (Gambar)</label>
                                 <input class="form-control" type="file" id="buktiTransfer" accept="image/*" required>
                                 <div class="form-text">Pastikan nominal dan tanggal transfer terlihat jelas.</div>
                             </div>
                             <div class="d-grid gap-2 mt-4">
-                                <button type="submit" class="btn btn-success btn-lg">Kirim Konfirmasi Pembayaran</button>
+                                <button type="submit" class="btn btn-success btn-lg">Kirim Konfirmasi
+                                    Pembayaran</button>
                             </div>
                         </form>
                     </div>
@@ -75,33 +106,53 @@
         </div>
     </div>
 
-    <script>
-        // 1. AMBIL DATA DARI HALAMAN BOOKING
-        const dataBooking = JSON.parse(localStorage.getItem('dataBookingSementara'));
+    <script type="module">
+        import { getBookingByCode, uploadPayment } from './main.js';
 
-        // Jika tidak ada data (pelanggan langsung buka halaman ini tanpa pesan), kembalikan ke form
-        if (!dataBooking) {
+        // Helper format Rupiah
+        const formatRupiah = (angka) =>
+            'Rp ' + Number(angka).toLocaleString('id-ID');
+
+        // Helper format tanggal MySQL -> Indonesia
+        const formatTanggal = (tgl) => {
+            const d = new Date(tgl);
+            return isNaN(d) ? tgl : d.toLocaleDateString('id-ID', {
+                weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'
+            });
+        };
+
+        const code = sessionStorage.getItem('booking_code');
+        const id = sessionStorage.getItem('booking_id');
+
+        if (!code) {
             alert('Anda belum melakukan pemesanan. Silakan pilih ruangan terlebih dahulu.');
-            window.location.href = 'index.html';
+            window.location.href = 'booking.html';
         } else {
-            // Tampilkan data ke layar
-            document.getElementById('tampilKode').innerText = dataBooking.kodeBooking;
-            document.getElementById('tampilNama').innerText = dataBooking.nama;
-            document.getElementById('tampilRuangan').innerText = dataBooking.ruangan;
-            document.getElementById('tampilJadwal').innerText = dataBooking.tanggal + ' | ' + dataBooking.jam;
+            document.getElementById('tampilKode').innerText = code;
+            const data = await getBookingByCode(code);
+            if (data) {
+                document.getElementById('tampilNama').innerText = data.customer_name;
+                document.getElementById('tampilRuangan').innerText = data.room_name;
+                // Jadwal dirapikan: tanggal + jam
+                document.getElementById('tampilJadwal').innerText =
+                    formatTanggal(data.booking_date) + ' | ' +
+                    data.start_time.slice(0, 5) + ' - ' + data.end_time.slice(0, 5);
+                // ===== BARU: tampilkan biaya =====
+                document.getElementById('tampilBiaya').innerText = formatRupiah(data.total_price);
+            }
         }
 
-        // 2. SIMULASI UPLOAD & PINDAH KE CEK STATUS
-        document.getElementById('formUpload').addEventListener('submit', function(e) {
-            e.preventDefault(); // Tahan form agar tidak reload
-            
-            // Di sistem nyata, di sini kita akan mengirim file ke Node.js
-            // Untuk sekarang, kita anggap berhasil.
-            alert('Bukti transfer berhasil diunggah! Sistem akan memverifikasi pesanan Anda.');
-            
-            // Arahkan ke halaman cek status
-            window.location.href = 'cek-status.html';
+        document.getElementById('formUpload').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const success = await uploadPayment(id);
+            if (success) {
+                alert('Bukti transfer berhasil diunggah! Sistem akan memverifikasi pesanan Anda.');
+                window.location.href = 'cek-status.html';
+            } else {
+                alert('Gagal mengirim bukti transfer.');
+            }
         });
     </script>
 </body>
+
 </html>
